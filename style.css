@@ -34,6 +34,12 @@ nav{
 .nav-menu a{
     color:white;
     text-decoration:none;
+    transition:opacity 0.2s;
+    cursor:pointer;
+}
+
+.nav-menu a:hover{
+    opacity:0.8;
 }
 
 /* HERO */
@@ -64,6 +70,44 @@ nav{
     margin-bottom:20px;
 }
 
+.search-section{
+    padding:20px 40px;
+    background:#ffffff;
+}
+
+.search-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.search-controls input{
+    padding:10px 14px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    min-width:220px;
+    flex:1 1 320px;
+    outline:none;
+}
+
+.search-controls select{
+    padding:10px 14px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    min-width:180px;
+    flex:0 0 220px;
+    outline:none;
+    margin-left:auto;
+}
+
+.search-controls input:focus,
+.search-controls select:focus{
+    border-color:#0b3d91;
+    box-shadow:0 0 6px rgba(11,61,145,0.2);
+}
+
 /* SECTION */
 section{
     padding:80px 40px;
@@ -73,30 +117,67 @@ h2{
     margin-bottom:20px;
 }
 
+#adminPanel{
+    position:relative;
+}
+
+#adminPanel .back-link{
+    position:absolute;
+    top:20px;
+    left:40px;
+    color:#0b3d91;
+    text-decoration:none;
+    font-size:16px;
+    cursor:pointer;
+    transition:opacity 0.2s;
+}
+
+#adminPanel .back-link:hover{
+    opacity:0.6;
+}
+
 /* CARD */
 .container{
     display:grid;
-
-    grid-template-columns:
-    repeat(auto-fit,minmax(250px,1fr));
-
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
     gap:20px;
+    justify-content:flex-start;
+    width:100%;
+    margin:0 0 30px;
 }
-
+    
 .card{
     background:white;
-
     padding:20px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.08);
+}
 
-    border-radius:20px;
-
-    box-shadow:
-    0 10px 25px
-    rgba(0,0,0,0.1);
+.card img{
+    width:100%;
+    height:150px;
+    object-fit:cover;
+    border-radius:6px;
+    margin-bottom:10px;
 }
 
 .card button{
     margin-top:10px;
+    border-radius:6px;
+    padding:8px 14px;
+    transition:opacity 0.2s, transform 0.1s;
+    cursor:pointer;
+    display:inline-block;
+    margin-right:5px;
+}
+
+.card button:hover{
+    opacity:0.9;
+}
+
+.card button:active{
+    transform:scale(0.98);
 }
 
 /* BUTTON */
@@ -105,13 +186,23 @@ h2{
 
     border:none;
 
-    border-radius:20px;
+    border-radius:6px;
 
     background:#0b3d91;
 
     color:white;
 
     cursor:pointer;
+
+    transition:opacity 0.2s, transform 0.1s;
+}
+
+.btn:hover{
+    opacity:0.9;
+}
+
+.btn:active{
+    transform:scale(0.98);
 }
 
 /* FORM */
@@ -122,10 +213,48 @@ h2{
     margin-bottom:30px;
 }
 
-.form-container input{
+.form-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    width:100%;
+    align-items:flex-end;
+}
+
+.form-row input,
+.form-container textarea{
     padding:10px;
-    flex:1;
+    flex:1 1 220px;
     min-width:180px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    background:white;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-row input[type="file"]{
+    padding:6px;
+}
+
+.form-row input:focus,
+.form-container textarea:focus{
+    border-color:#0b3d91;
+    box-shadow:0 0 5px rgba(11, 61, 145, 0.3);
+}
+
+.form-row button{
+    padding:10px 18px;
+    flex:0 0 auto;
+    border-radius:6px;
+    border:none;
+}
+
+.form-container textarea{
+    width:100%;
+    min-width:0;
+    min-height:100px;
+    resize:vertical;
 }
 
 /* LOGIN */
@@ -144,6 +273,23 @@ h2{
     #0b3d91,
     #1e90ff
     );
+
+    position:relative;
+}
+
+.back-link{
+    position:absolute;
+    top:20px;
+    left:20px;
+    color:white;
+    text-decoration:none;
+    font-size:16px;
+    cursor:pointer;
+    transition:opacity 0.2s;
+}
+
+.back-link:hover{
+    opacity:0.8;
 }
 
 .login-box{
@@ -160,6 +306,19 @@ h2{
     flex-direction:column;
 
     gap:15px;
+}
+
+.login-box input{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-box input:focus{
+    border-color:#0b3d91;
+    box-shadow:0 0 5px rgba(11, 61, 145, 0.3);
 }
 
 /* MODAL */
@@ -184,10 +343,12 @@ h2{
 .modal-content{
     background:white;
 
-    padding:30px;
+    padding:20px 25px;
 
-    border-radius:20px;
+    border-radius:6px;
 
     width:90%;
     max-width:500px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
 }
