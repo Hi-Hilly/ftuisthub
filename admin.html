@@ -15,10 +15,14 @@
 </head>
 
 <body>
+    
 
+    
     <!-- LOGIN -->
     <div class="login-page"
         id="loginPage">
+
+        <a href="index.html" class="back-link"> Back</a>
 
         <div class="login-box">
 
@@ -26,7 +30,9 @@
 
             <input type="password"
                 id="password"
-                placeholder="Password">
+                placeholder="Password"
+                onkeydown="if(event.key === 'Enter') { login() }"
+                >
 
             <button class="btn"
                 onclick="login()">
@@ -41,32 +47,38 @@
     <div id="adminPanel"
         style="display:none;">
 
+        <a href="index.html" class="back-link"> Back</a>
+
         <section>
 
             <h1>Dashboard Admin</h1>
-
+            <br><br>
             <!-- BEASISWA -->
             <h2>Tambah Beasiswa</h2>
 
             <div class="form-container">
+                <div class="form-row">
+                    <input type="text"
+                        id="bNama"
+                        placeholder="Nama">
 
-                <input type="text"
-                    id="bNama"
-                    placeholder="Nama">
+                    <input type="date"
+                        id="bDeadline"
+                        placeholder="Deadline"
+                        required>
 
-                <input type="text"
-                    id="bDeadline"
-                    placeholder="Deadline">
+                    <input type="file"
+                        id="bImage"
+                        accept="image/*">
 
-                <input type="text"
-                    id="bDesc"
-                    placeholder="Deskripsi">
+                    <button class="btn"
+                        onclick="addBeasiswa()">
+                        Add
+                    </button>
+                </div>
 
-                <button class="btn"
-                    onclick="addBeasiswa()">
-                    Add
-                </button>
-
+                <textarea id="bDesc"
+                    placeholder="Deskripsi"></textarea>
             </div>
 
             <div class="container"
@@ -77,24 +89,28 @@
             <h2>Tambah Event</h2>
 
             <div class="form-container">
+                <div class="form-row">
+                    <input type="text"
+                        id="eNama"
+                        placeholder="Nama Event">
 
-                <input type="text"
-                    id="eNama"
-                    placeholder="Nama Event">
+                    <input type="date"
+                        id="eTanggal"
+                        placeholder="Tanggal"
+                        required>
 
-                <input type="text"
-                    id="eTanggal"
-                    placeholder="Tanggal">
+                    <input type="file"
+                        id="eImage"
+                        accept="image/*">
 
-                <input type="text"
-                    id="eDesc"
-                    placeholder="Deskripsi">
+                    <button class="btn"
+                        onclick="addEvent()">
+                        Add
+                    </button>
+                </div>
 
-                <button class="btn"
-                    onclick="addEvent()">
-                    Add
-                </button>
-
+                <textarea id="eDesc"
+                    placeholder="Deskripsi"></textarea>
             </div>
 
             <div class="container"
@@ -102,6 +118,24 @@
             </div>
 
         </section>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal"
+        id="modal">
+
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <br>
+            <p id="modal-body"></p>
+            <br>
+            <button class="btn"
+                onclick="closeModal()">
+                Close
+            </button>
+
+        </div>
 
     </div>
 
