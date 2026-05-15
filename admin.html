@@ -2,110 +2,173 @@
 <html lang="id">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-    <title>Admin Dashboard</title>
+    <title>FTUI Student Hub</title>
 
     <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
 
-    <!-- LOGIN -->
-    <div class="login-page"
-        id="loginPage">
+    <!-- NAVBAR -->
+    <nav>
 
-        <div class="login-box">
+        <div class="nav-container">
 
-            <h1>Admin Login</h1>
+            <h2 class="logo">
+                FTUI Hub
+            </h2>
 
-            <input type="password"
-                id="password"
-                placeholder="Password">
+            <ul class="nav-menu">
 
+                <li>
+                    <a href="#beasiswa">
+                        Beasiswa
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#event">
+                        Event
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#sosial">
+                        Sosial Media
+                    </a>
+                </li>
+
+                <li>
+                    <a href="admin.html">
+                        Admin
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+
+        <h1>
+            FTUI Student Hub
+        </h1>
+
+        <p>
+            Pusat informasi beasiswa,
+            event, dan sosial media FTUI
+        </p>
+
+    </div>
+
+    <div class="search-section">
+        <div class="search-controls">
+            <input type="search"
+                id="searchInput"
+                placeholder="Cari...">
+
+            <select id="sortSelect">
+                <option value="none">Urutkan berdasarkan tanggal</option>
+                <option value="asc">Tanggal terdekat</option>
+                <option value="desc">Tanggal terjauh</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- BEASISWA -->
+    <section id="beasiswa">
+
+        <h2>Beasiswa Terbaru</h2>
+
+        <div class="container"
+            id="beasiswaContainer">
+        </div>
+
+    </section>
+
+    <!-- EVENT -->
+    <section id="event">
+
+        <h2>Event Terbaru</h2>
+
+        <div class="container"
+            id="eventContainer">
+        </div>
+
+    </section>
+
+    <!-- SOSIAL -->
+    <section id="sosial">
+
+        <h2>Media Sosial</h2>
+
+        <div class="container">
+
+            <div style="cursor: pointer;" class="card social-card" 
+                onclick="openLink('https://youtube.com/@fakultasteknikui_official')">
+
+                <h3>FTUI YouTube</h3>
+
+            </div>
+
+            <div style="cursor: pointer;" class="card social-card" 
+                onclick="openLink('https://www.instagram.com/fakultasteknik.ui')">
+
+                <h3>FTUI Instagram</h3>
+
+            </div>
+
+            <div style="cursor: pointer;" class="card social-card" 
+                onclick="openLink('https://www.instagram.com/dteftui')">
+
+                <h3>Teknik Elektro</h3>
+
+            </div>
+
+            <div style="cursor: pointer;" class="card social-card"
+                onclick="openLink('https://www.instagram.com/teknikindustri.ui')">
+
+                <h3>Teknik Industri</h3>
+
+            </div>
+
+            <div style="cursor: pointer;" class="card social-card"
+                onclick="openLink('https://www.instagram.com/dtkftui')">
+
+                <h3>Teknik Kimia</h3>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- MODAL -->
+    <div class="modal"
+        id="modal">
+
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <br>
+            <p id="modal-body"></p>
+            <br>
             <button class="btn"
-                onclick="login()">
-                Login
+                onclick="closeModal()">
+                Close
             </button>
 
         </div>
 
     </div>
 
-    <!-- ADMIN PANEL -->
-    <div id="adminPanel"
-        style="display:none;">
-
-        <section>
-
-            <h1>Dashboard Admin</h1>
-
-            <!-- BEASISWA -->
-            <h2>Tambah Beasiswa</h2>
-
-            <div class="form-container">
-
-                <input type="text"
-                    id="bNama"
-                    placeholder="Nama">
-
-                <input type="text"
-                    id="bDeadline"
-                    placeholder="Deadline">
-
-                <input type="text"
-                    id="bDesc"
-                    placeholder="Deskripsi">
-
-                <button class="btn"
-                    onclick="addBeasiswa()">
-                    Add
-                </button>
-
-            </div>
-
-            <div class="container"
-                id="adminBeasiswa">
-            </div>
-
-            <!-- EVENT -->
-            <h2>Tambah Event</h2>
-
-            <div class="form-container">
-
-                <input type="text"
-                    id="eNama"
-                    placeholder="Nama Event">
-
-                <input type="text"
-                    id="eTanggal"
-                    placeholder="Tanggal">
-
-                <input type="text"
-                    id="eDesc"
-                    placeholder="Deskripsi">
-
-                <button class="btn"
-                    onclick="addEvent()">
-                    Add
-                </button>
-
-            </div>
-
-            <div class="container"
-                id="adminEvent">
-            </div>
-
-        </section>
-
-    </div>
-
-    <script src="admin.js"></script>
+    <script src="script.js"></script>
 
 </body>
 
