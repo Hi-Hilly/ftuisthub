@@ -1,354 +1,240 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Poppins,sans-serif;
+// ============================================================
+//  KONFIGURASI SUPABASE — ISI BAGIAN INI DULU!
+//  (sama persis dengan yang di script.js)
+// ============================================================
+const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; // <-- ganti ini
+const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';                // <-- ganti ini
+// ============================================================
+
+// Password login admin — ganti sesukamu
+const ADMIN_PASSWORD = 'adminftui123';
+
+// ─── SETUP ───────────────────────────────────────────────────
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ─── LOGIN ───────────────────────────────────────────────────
+
+function login() {
+  const pass = document.getElementById('password').value;
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminData();
+  } else {
+    alert('❌ Password salah! Coba lagi.');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
 }
 
-body{
-    background:#f4f6f9;
+// ─── TAMBAH BEASISWA ─────────────────────────────────────────
+
+async function addBeasiswa() {
+  const nama      = document.getElementById('bNama').value.trim();
+  const deskripsi = document.getElementById('bDesc').value.trim();
+  const deadline  = document.getElementById('bDeadline').value;
+  const imageFile = document.getElementById('bImage').files[0];
+
+  if (!nama) return alert('Nama beasiswa wajib diisi!');
+
+  const btn = document.querySelector('#adminPanel button[onclick="addBeasiswa()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+
+  let image_url = null;
+
+  // Upload gambar ke Supabase Storage jika ada
+  if (imageFile) {
+    const fileName = `beasiswa_${Date.now()}_${imageFile.name}`;
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('images')
+      .upload(fileName, imageFile);
+
+    if (uploadError) {
+      console.warn('Gagal upload gambar:', uploadError.message);
+    } else {
+      const { data: urlData } = db.storage.from('images').getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
+    }
+  }
+
+  const { error } = await db.from('beasiswa').insert({ nama, deskripsi, deadline: deadline || null, image_url });
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
+
+  if (error) {
+    alert('Gagal menyimpan: ' + error.message);
+    return;
+  }
+
+  // Reset form
+  document.getElementById('bNama').value = '';
+  document.getElementById('bDesc').value = '';
+  document.getElementById('bDeadline').value = '';
+  document.getElementById('bImage').value = '';
+
+  alert('✅ Beasiswa berhasil ditambahkan!');
+  loadAdminData();
 }
 
-/* NAVBAR */
-nav{
-    background:#0b3d91;
-    padding:20px;
+// ─── TAMBAH EVENT ────────────────────────────────────────────
+
+async function addEvent() {
+  const nama      = document.getElementById('eNama').value.trim();
+  const deskripsi = document.getElementById('eDesc').value.trim();
+  const tanggal   = document.getElementById('eTanggal').value;
+  const imageFile = document.getElementById('eImage').files[0];
+
+  if (!nama) return alert('Nama event wajib diisi!');
+
+  const btn = document.querySelector('#adminPanel button[onclick="addEvent()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+
+  let image_url = null;
+
+  if (imageFile) {
+    const fileName = `event_${Date.now()}_${imageFile.name}`;
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('images')
+      .upload(fileName, imageFile);
+
+    if (uploadError) {
+      console.warn('Gagal upload gambar:', uploadError.message);
+    } else {
+      const { data: urlData } = db.storage.from('images').getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
+    }
+  }
+
+  const { error } = await db.from('events').insert({ nama, deskripsi, tanggal: tanggal || null, image_url });
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
+
+  if (error) {
+    alert('Gagal menyimpan: ' + error.message);
+    return;
+  }
+
+  document.getElementById('eNama').value = '';
+  document.getElementById('eDesc').value = '';
+  document.getElementById('eTanggal').value = '';
+  document.getElementById('eImage').value = '';
+
+  alert('✅ Event berhasil ditambahkan!');
+  loadAdminData();
 }
 
-.nav-container{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+// ─── HAPUS DATA ───────────────────────────────────────────────
+
+async function deleteItem(tabel, id, nama) {
+  const konfirmasi = confirm(`Hapus "${nama}"? Tindakan ini tidak bisa dibatalkan.`);
+  if (!konfirmasi) return;
+
+  const { error } = await db.from(tabel).delete().eq('id', id);
+  if (error) {
+    alert('Gagal menghapus: ' + error.message);
+    return;
+  }
+
+  loadAdminData();
 }
 
-.logo{
-    color:white;
+// ─── LOAD DATA ADMIN ─────────────────────────────────────────
+
+async function loadAdminData() {
+  await Promise.all([loadAdminBeasiswa(), loadAdminEvents()]);
 }
 
-.nav-menu{
-    display:flex;
-    gap:20px;
-    list-style:none;
+async function loadAdminBeasiswa() {
+  const container = document.getElementById('adminBeasiswa');
+  container.innerHTML = '<p>Memuat...</p>';
+
+  const { data, error } = await db
+    .from('beasiswa')
+    .select('*')
+    .order('deadline', { ascending: true });
+
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data.</p>';
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p>Belum ada data beasiswa.</p>';
+    return;
+  }
+
+  container.innerHTML = data.map(item => `
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        ${item.image_url ? `<img src="${item.image_url}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;float:left;margin-right:12px;">` : ''}
+        <strong>${escHtml(item.nama)}</strong>
+        ${item.deadline ? `<p style="color:#888;font-size:0.8rem;margin:4px 0;">⏰ ${formatTanggal(item.deadline)}</p>` : ''}
+        <p style="font-size:0.85rem;">${escHtml((item.deskripsi || '').substring(0, 80))}${(item.deskripsi||'').length > 80 ? '...' : ''}</p>
+      </div>
+      <button class="btn" style="background:#e74c3c;flex-shrink:0;" onclick="deleteItem('beasiswa', ${item.id}, '${escHtml(item.nama)}')">Hapus</button>
+    </div>
+  `).join('');
 }
 
-.nav-menu a{
-    color:white;
-    text-decoration:none;
-    transition:opacity 0.2s;
-    cursor:pointer;
+async function loadAdminEvents() {
+  const container = document.getElementById('adminEvent');
+  container.innerHTML = '<p>Memuat...</p>';
+
+  const { data, error } = await db
+    .from('events')
+    .select('*')
+    .order('tanggal', { ascending: true });
+
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data.</p>';
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p>Belum ada data event.</p>';
+    return;
+  }
+
+  container.innerHTML = data.map(item => `
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        ${item.image_url ? `<img src="${item.image_url}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;float:left;margin-right:12px;">` : ''}
+        <strong>${escHtml(item.nama)}</strong>
+        ${item.tanggal ? `<p style="color:#888;font-size:0.8rem;margin:4px 0;">📅 ${formatTanggal(item.tanggal)}</p>` : ''}
+        <p style="font-size:0.85rem;">${escHtml((item.deskripsi || '').substring(0, 80))}${(item.deskripsi||'').length > 80 ? '...' : ''}</p>
+      </div>
+      <button class="btn" style="background:#e74c3c;flex-shrink:0;" onclick="deleteItem('events', ${item.id}, '${escHtml(item.nama)}')">Hapus</button>
+    </div>
+  `).join('');
 }
 
-.nav-menu a:hover{
-    opacity:0.8;
+// ─── MODAL ───────────────────────────────────────────────────
+
+function openModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent  = body;
+  document.getElementById('modal').style.display     = 'flex';
 }
 
-/* HERO */
-.hero{
-    height:60vh;
-    background:
-    linear-gradient(
-    135deg,
-    #0b3d91,
-    #1e90ff
-    );
-
-    color:white;
-
-    display:flex;
-    flex-direction:column;
-
-    justify-content:center;
-    align-items:center;
-
-    text-align:center;
-
-    padding:20px;
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
 }
 
-.hero h1{
-    font-size:52px;
-    margin-bottom:20px;
+// ─── HELPERS ─────────────────────────────────────────────────
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-.search-section{
-    padding:20px 40px;
-    background:#ffffff;
-}
-
-.search-controls{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    align-items:center;
-    justify-content:space-between;
-}
-
-.search-controls input{
-    padding:10px 14px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    min-width:220px;
-    flex:1 1 320px;
-    outline:none;
-}
-
-.search-controls select{
-    padding:10px 14px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    min-width:180px;
-    flex:0 0 220px;
-    outline:none;
-    margin-left:auto;
-}
-
-.search-controls input:focus,
-.search-controls select:focus{
-    border-color:#0b3d91;
-    box-shadow:0 0 6px rgba(11,61,145,0.2);
-}
-
-/* SECTION */
-section{
-    padding:80px 40px;
-}
-
-h2{
-    margin-bottom:20px;
-}
-
-#adminPanel{
-    position:relative;
-}
-
-#adminPanel .back-link{
-    position:absolute;
-    top:20px;
-    left:40px;
-    color:#0b3d91;
-    text-decoration:none;
-    font-size:16px;
-    cursor:pointer;
-    transition:opacity 0.2s;
-}
-
-#adminPanel .back-link:hover{
-    opacity:0.6;
-}
-
-/* CARD */
-.container{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
-    gap:20px;
-    justify-content:flex-start;
-    width:100%;
-    margin:0 0 30px;
-}
-    
-.card{
-    background:white;
-    padding:20px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    box-shadow:0 6px 15px rgba(0,0,0,0.08);
-}
-
-.card img{
-    width:100%;
-    height:150px;
-    object-fit:cover;
-    border-radius:6px;
-    margin-bottom:10px;
-}
-
-.card button{
-    margin-top:10px;
-    border-radius:6px;
-    padding:8px 14px;
-    transition:opacity 0.2s, transform 0.1s;
-    cursor:pointer;
-    display:inline-block;
-    margin-right:5px;
-}
-
-.card button:hover{
-    opacity:0.9;
-}
-
-.card button:active{
-    transform:scale(0.98);
-}
-
-/* BUTTON */
-.btn{
-    padding:10px 18px;
-
-    border:none;
-
-    border-radius:6px;
-
-    background:#0b3d91;
-
-    color:white;
-
-    cursor:pointer;
-
-    transition:opacity 0.2s, transform 0.1s;
-}
-
-.btn:hover{
-    opacity:0.9;
-}
-
-.btn:active{
-    transform:scale(0.98);
-}
-
-/* FORM */
-.form-container{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-bottom:30px;
-}
-
-.form-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    width:100%;
-    align-items:flex-end;
-}
-
-.form-row input,
-.form-container textarea{
-    padding:10px;
-    flex:1 1 220px;
-    min-width:180px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    background:white;
-    outline:none;
-    transition:border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-row input[type="file"]{
-    padding:6px;
-}
-
-.form-row input:focus,
-.form-container textarea:focus{
-    border-color:#0b3d91;
-    box-shadow:0 0 5px rgba(11, 61, 145, 0.3);
-}
-
-.form-row button{
-    padding:10px 18px;
-    flex:0 0 auto;
-    border-radius:6px;
-    border:none;
-}
-
-.form-container textarea{
-    width:100%;
-    min-width:0;
-    min-height:100px;
-    resize:vertical;
-}
-
-/* LOGIN */
-.login-page{
-    height:100vh;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    background:
-    linear-gradient(
-    135deg,
-    #0b3d91,
-    #1e90ff
-    );
-
-    position:relative;
-}
-
-.back-link{
-    position:absolute;
-    top:20px;
-    left:20px;
-    color:white;
-    text-decoration:none;
-    font-size:16px;
-    cursor:pointer;
-    transition:opacity 0.2s;
-}
-
-.back-link:hover{
-    opacity:0.8;
-}
-
-.login-box{
-    background:white;
-
-    padding:40px;
-
-    border-radius:20px;
-
-    width:350px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:15px;
-}
-
-.login-box input{
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:6px;
-    outline:none;
-    transition:border-color 0.2s, box-shadow 0.2s;
-}
-
-.login-box input:focus{
-    border-color:#0b3d91;
-    box-shadow:0 0 5px rgba(11, 61, 145, 0.3);
-}
-
-/* MODAL */
-.modal{
-    display:none;
-
-    position:fixed;
-
-    width:100%;
-    height:100%;
-
-    top:0;
-    left:0;
-
-    background:
-    rgba(0,0,0,0.6);
-
-    justify-content:center;
-    align-items:center;
-}
-
-.modal-content{
-    background:white;
-
-    padding:20px 25px;
-
-    border-radius:6px;
-
-    width:90%;
-    max-width:500px;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
+function formatTanggal(str) {
+  if (!str) return '-';
+  const d = new Date(str);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
