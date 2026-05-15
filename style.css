@@ -2,12 +2,12 @@
 //  KONFIGURASI SUPABASE — ISI BAGIAN INI DULU!
 //  (sama persis dengan yang di script.js)
 // ============================================================
-const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; // <-- ganti ini
-const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';                // <-- ganti ini
+const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; 
+const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';                
 // ============================================================
 
-// Password login admin — ganti sesukamu
-const ADMIN_PASSWORD = 'adminftui123';
+// Password login admin 
+const ADMIN_PASSWORD = 'adminftuisthub';
 
 // ─── SETUP ───────────────────────────────────────────────────
 
