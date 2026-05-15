@@ -1,5 +1,5 @@
 // ============================================================
-const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; 
+const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';               
 // ============================================================
 
