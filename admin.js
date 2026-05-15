@@ -1,328 +1,240 @@
-const ADMIN_PASSWORD =
-"adminftuisthub";
+// ============================================================
+//  KONFIGURASI SUPABASE — ISI BAGIAN INI DULU!
+//  (sama persis dengan yang di script.js)
+// ============================================================
+const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; 
+const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';                
+// ============================================================
 
-function login(){
+// Password login admin 
+const ADMIN_PASSWORD = 'adminftuisthub';
 
-    let password =
-    document.getElementById(
-        "password"
-    ).value;
+// ─── SETUP ───────────────────────────────────────────────────
 
-    if(password === ADMIN_PASSWORD){
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById(
-            "loginPage"
-        ).style.display = "none";
+// ─── LOGIN ───────────────────────────────────────────────────
 
-        document.getElementById(
-            "adminPanel"
-        ).style.display = "block";
+function login() {
+  const pass = document.getElementById('password').value;
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminData();
+  } else {
+    alert('❌ Password salah! Coba lagi.');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
+}
 
-        renderAdminBeasiswa();
+// ─── TAMBAH BEASISWA ─────────────────────────────────────────
 
-        renderAdminEvent();
+async function addBeasiswa() {
+  const nama      = document.getElementById('bNama').value.trim();
+  const deskripsi = document.getElementById('bDesc').value.trim();
+  const deadline  = document.getElementById('bDeadline').value;
+  const imageFile = document.getElementById('bImage').files[0];
 
-    }else{
+  if (!nama) return alert('Nama beasiswa wajib diisi!');
 
-        alert("Password salah");
+  const btn = document.querySelector('#adminPanel button[onclick="addBeasiswa()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+
+  let image_url = null;
+
+  // Upload gambar ke Supabase Storage jika ada
+  if (imageFile) {
+    const fileName = `beasiswa_${Date.now()}_${imageFile.name}`;
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('images')
+      .upload(fileName, imageFile);
+
+    if (uploadError) {
+      console.warn('Gagal upload gambar:', uploadError.message);
+    } else {
+      const { data: urlData } = db.storage.from('images').getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
     }
+  }
+
+  const { error } = await db.from('beasiswa').insert({ nama, deskripsi, deadline: deadline || null, image_url });
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
+
+  if (error) {
+    alert('Gagal menyimpan: ' + error.message);
+    return;
+  }
+
+  // Reset form
+  document.getElementById('bNama').value = '';
+  document.getElementById('bDesc').value = '';
+  document.getElementById('bDeadline').value = '';
+  document.getElementById('bImage').value = '';
+
+  alert('✅ Beasiswa berhasil ditambahkan!');
+  loadAdminData();
 }
 
-let beasiswaList =
-JSON.parse(
-localStorage.getItem("beasiswa")
-) || [];
+// ─── TAMBAH EVENT ────────────────────────────────────────────
 
-let eventList =
-JSON.parse(
-localStorage.getItem("event")
-) || [];
+async function addEvent() {
+  const nama      = document.getElementById('eNama').value.trim();
+  const deskripsi = document.getElementById('eDesc').value.trim();
+  const tanggal   = document.getElementById('eTanggal').value;
+  const imageFile = document.getElementById('eImage').files[0];
 
-function saveData(){
+  if (!nama) return alert('Nama event wajib diisi!');
 
-    localStorage.setItem(
-        "beasiswa",
-        JSON.stringify(beasiswaList)
-    );
+  const btn = document.querySelector('#adminPanel button[onclick="addEvent()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
-    localStorage.setItem(
-        "event",
-        JSON.stringify(eventList)
-    );
-}
+  let image_url = null;
 
-function readFileAsDataURL(file){
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-    });
-}
+  if (imageFile) {
+    const fileName = `event_${Date.now()}_${imageFile.name}`;
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('images')
+      .upload(fileName, imageFile);
 
-function formatText(text){
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\r\n|\r|\n/g, "<br>");
-}
-
-/* ADD */
-function addBeasiswa(){
-
-    const file =
-        document.getElementById(
-            "bImage"
-        ).files[0];
-
-    const nama = document.getElementById("bNama").value.trim();
-    const deadline = document.getElementById("bDeadline").value;
-    const desc = document.getElementById("bDesc").value.trim();
-
-    if(!nama || !deadline || !desc){
-        alert("Harap lengkapi semua data beasiswa.");
-        return;
+    if (uploadError) {
+      console.warn('Gagal upload gambar:', uploadError.message);
+    } else {
+      const { data: urlData } = db.storage.from('images').getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
     }
+  }
 
-    const imagePromise = file
-        ? readFileAsDataURL(file)
-        : Promise.resolve("https://via.placeholder.com/300");
+  const { error } = await db.from('events').insert({ nama, deskripsi, tanggal: tanggal || null, image_url });
 
-    imagePromise.then(image => {
-        beasiswaList.push({
-            nama: nama,
-            deadline: deadline,
-            desc: desc,
-            image: image
-        });
+  if (btn) { btn.disabled = false; btn.textContent = 'Add'; }
 
-        saveData();
+  if (error) {
+    alert('Gagal menyimpan: ' + error.message);
+    return;
+  }
 
-        renderAdminBeasiswa();
+  document.getElementById('eNama').value = '';
+  document.getElementById('eDesc').value = '';
+  document.getElementById('eTanggal').value = '';
+  document.getElementById('eImage').value = '';
 
-        document.getElementById("bNama").value = "";
-        document.getElementById("bDeadline").value = "";
-        document.getElementById("bDesc").value = "";
-        document.getElementById("bImage").value = "";
-    }).catch(() => {
-        alert("Gagal memproses gambar beasiswa. Coba lagi.");
-    });
+  alert('✅ Event berhasil ditambahkan!');
+  loadAdminData();
 }
 
-function addEvent(){
+// ─── HAPUS DATA ───────────────────────────────────────────────
 
-    const file =
-        document.getElementById(
-            "eImage"
-        ).files[0];
+async function deleteItem(tabel, id, nama) {
+  const konfirmasi = confirm(`Hapus "${nama}"? Tindakan ini tidak bisa dibatalkan.`);
+  if (!konfirmasi) return;
 
-    const nama = document.getElementById("eNama").value.trim();
-    const tanggal = document.getElementById("eTanggal").value;
-    const desc = document.getElementById("eDesc").value.trim();
+  const { error } = await db.from(tabel).delete().eq('id', id);
+  if (error) {
+    alert('Gagal menghapus: ' + error.message);
+    return;
+  }
 
-    if(!nama || !tanggal || !desc){
-        alert("Harap lengkapi semua data event.");
-        return;
-    }
-
-    const imagePromise = file
-        ? readFileAsDataURL(file)
-        : Promise.resolve("https://via.placeholder.com/300");
-
-    imagePromise.then(image => {
-        eventList.push({
-            nama: nama,
-            tanggal: tanggal,
-            desc: desc,
-            image: image
-        });
-
-        saveData();
-
-        renderAdminEvent();
-
-        document.getElementById("eNama").value = "";
-        document.getElementById("eTanggal").value = "";
-        document.getElementById("eDesc").value = "";
-        document.getElementById("eImage").value = "";
-    }).catch(() => {
-        alert("Gagal memproses gambar event. Coba lagi.");
-    });
+  loadAdminData();
 }
 
-/* RENDER */
-function renderAdminBeasiswa(){
+// ─── LOAD DATA ADMIN ─────────────────────────────────────────
 
-    const container =
-    document.getElementById(
-        "adminBeasiswa"
-    );
-
-    container.innerHTML = "";
-
-    beasiswaList.forEach((b,index)=>{
-
-        container.innerHTML += `
-
-        <div class="card">
-
-            <img src="${b.image}" alt="">
-
-            <h3>${b.nama}</h3>
-
-            <button class="btn"
-            onclick="openModal('beasiswa',${index})">
-            Open
-            </button>
-
-            <button class="btn"
-            onclick="editBeasiswa(${index})">
-            Edit
-            </button>
-
-            <button class="btn"
-            onclick="removeBeasiswa(${index})">
-            Remove
-            </button>
-
-        </div>
-        `;
-    });
+async function loadAdminData() {
+  await Promise.all([loadAdminBeasiswa(), loadAdminEvents()]);
 }
 
-function renderAdminEvent(){
+async function loadAdminBeasiswa() {
+  const container = document.getElementById('adminBeasiswa');
+  container.innerHTML = '<p>Memuat...</p>';
 
-    const container =
-    document.getElementById(
-        "adminEvent"
-    );
+  const { data, error } = await db
+    .from('beasiswa')
+    .select('*')
+    .order('deadline', { ascending: true });
 
-    container.innerHTML = "";
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data.</p>';
+    return;
+  }
 
-    eventList.forEach((e,index)=>{
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p>Belum ada data beasiswa.</p>';
+    return;
+  }
 
-        container.innerHTML += `
-
-        <div class="card">
-
-            <img src="${e.image}" alt="">
-
-            <h3>${e.nama}</h3>
-
-            <button class="btn"
-            onclick="openModal('event',${index})">
-            Open
-            </button>
-
-            <button class="btn"
-            onclick="editEvent(${index})">
-            Edit
-            </button>
-
-            <button class="btn"
-            onclick="removeEvent(${index})">
-            Remove
-            </button>
-
-        </div>
-        `;
-    });
+  container.innerHTML = data.map(item => `
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        ${item.image_url ? `<img src="${item.image_url}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;float:left;margin-right:12px;">` : ''}
+        <strong>${escHtml(item.nama)}</strong>
+        ${item.deadline ? `<p style="color:#888;font-size:0.8rem;margin:4px 0;">⏰ ${formatTanggal(item.deadline)}</p>` : ''}
+        <p style="font-size:0.85rem;">${escHtml((item.deskripsi || '').substring(0, 80))}${(item.deskripsi||'').length > 80 ? '...' : ''}</p>
+      </div>
+      <button class="btn" style="background:#e74c3c;flex-shrink:0;" onclick="deleteItem('beasiswa', ${item.id}, '${escHtml(item.nama)}')">Hapus</button>
+    </div>
+  `).join('');
 }
 
-/* REMOVE */
-function removeBeasiswa(index){
+async function loadAdminEvents() {
+  const container = document.getElementById('adminEvent');
+  container.innerHTML = '<p>Memuat...</p>';
 
-    beasiswaList.splice(index,1);
+  const { data, error } = await db
+    .from('events')
+    .select('*')
+    .order('tanggal', { ascending: true });
 
-    saveData();
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data.</p>';
+    return;
+  }
 
-    renderAdminBeasiswa();
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p>Belum ada data event.</p>';
+    return;
+  }
+
+  container.innerHTML = data.map(item => `
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        ${item.image_url ? `<img src="${item.image_url}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;float:left;margin-right:12px;">` : ''}
+        <strong>${escHtml(item.nama)}</strong>
+        ${item.tanggal ? `<p style="color:#888;font-size:0.8rem;margin:4px 0;">📅 ${formatTanggal(item.tanggal)}</p>` : ''}
+        <p style="font-size:0.85rem;">${escHtml((item.deskripsi || '').substring(0, 80))}${(item.deskripsi||'').length > 80 ? '...' : ''}</p>
+      </div>
+      <button class="btn" style="background:#e74c3c;flex-shrink:0;" onclick="deleteItem('events', ${item.id}, '${escHtml(item.nama)}')">Hapus</button>
+    </div>
+  `).join('');
 }
 
-function removeEvent(index){
+// ─── MODAL ───────────────────────────────────────────────────
 
-    eventList.splice(index,1);
-
-    saveData();
-
-    renderAdminEvent();
+function openModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent  = body;
+  document.getElementById('modal').style.display     = 'flex';
 }
 
-/* EDIT */
-function editBeasiswa(index){
-
-    let b = beasiswaList[index];
-
-    document.getElementById("bNama").value = b.nama;
-    document.getElementById("bDeadline").value = b.deadline;
-    document.getElementById("bDesc").value = b.desc;
-
-    document.getElementById("bNama").focus();
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
 }
 
-function editEvent(index){
+// ─── HELPERS ─────────────────────────────────────────────────
 
-    let e = eventList[index];
-
-    document.getElementById("eNama").value = e.nama;
-    document.getElementById("eTanggal").value = e.tanggal;
-    document.getElementById("eDesc").value = e.desc;
-
-    document.getElementById("eNama").focus();
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-/* MODAL */
-function openModal(type, index){
-
-    const title =
-    document.getElementById(
-        "modal-title"
-    );
-
-    const body =
-    document.getElementById(
-        "modal-body"
-    );
-
-    if(type === "beasiswa"){
-
-        let b = beasiswaList[index];
-
-        title.innerText = b.nama;
-
-        body.innerHTML = `
-        <img src="${b.image || 'https://via.placeholder.com/300'}" alt="" style="width:100%; border-radius:6px; margin-bottom:15px;">
-        <b>Deadline:</b><br>
-        ${b.deadline}<br><br>
-        <b>Deskripsi:</b><br>
-        ${formatText(b.desc)}
-        `;
-    }
-
-    if(type === "event"){
-
-        let e = eventList[index];
-
-        title.innerText = e.nama;
-
-        body.innerHTML = `
-        <img src="${e.image || 'https://via.placeholder.com/300'}" alt="" style="width:100%; border-radius:6px; margin-bottom:15px;">
-        <b>Tanggal:</b><br>
-        ${e.tanggal}<br><br>
-        <b>Deskripsi:</b><br>
-        ${formatText(e.desc)}
-        `;
-    }
-
-    document.getElementById(
-        "modal"
-    ).style.display = "flex";
-}
-
-function closeModal(){
-
-    document.getElementById(
-        "modal"
-    ).style.display = "none";
+function formatTanggal(str) {
+  if (!str) return '-';
+  const d = new Date(str);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
