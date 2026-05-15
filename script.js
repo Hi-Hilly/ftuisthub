@@ -1,243 +1,171 @@
-let beasiswaList =
-JSON.parse(
-localStorage.getItem("beasiswa")
-) || [];
+// ============================================================
+//  KONFIGURASI SUPABASE — ISI BAGIAN INI DULU!
+//  Cara dapat URL & KEY: Supabase → Settings → API
+// ============================================================
+const SUPABASE_URL = 'https://pwdiqckmrpvjwtbstiqx.supabase.co/rest/v1/'; // <-- ganti ini
+const SUPABASE_KEY = 'sb_publishable_wCbv97L4jw0ufklFjJU9DA_ERLJYweY';                // <-- ganti ini
+// ============================================================
 
-let eventList =
-JSON.parse(
-localStorage.getItem("event")
-) || [];
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function getSearchKeyword(){
-    return document
-        .getElementById("searchInput")
-        .value
-        .trim()
-        .toLowerCase();
+// ─── LOAD DATA ───────────────────────────────────────────────
+
+async function loadBeasiswa() {
+  const container = document.getElementById('beasiswaContainer');
+  container.innerHTML = '<p>Memuat data...</p>';
+
+  const sortVal = document.getElementById('sortSelect')?.value || 'asc';
+  const ascending = sortVal !== 'desc';
+
+  const { data, error } = await db
+    .from('beasiswa')
+    .select('*')
+    .order('deadline', { ascending });
+
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data beasiswa.</p>';
+    console.error(error);
+    return;
+  }
+
+  const keyword = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  const filtered = (data || []).filter(item =>
+    item.nama?.toLowerCase().includes(keyword) ||
+    item.deskripsi?.toLowerCase().includes(keyword)
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<p>Belum ada data beasiswa.</p>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => `
+    <div class="card" onclick="openModal('${escHtml(item.nama)}', '${escHtml(item.deskripsi || '')}', '${item.deadline || ''}', '${item.image_url || ''}')">
+      ${item.image_url ? `<img src="${item.image_url}" alt="${escHtml(item.nama)}" style="width:100%;border-radius:8px;margin-bottom:10px;object-fit:cover;max-height:160px;">` : ''}
+      <h3>${escHtml(item.nama)}</h3>
+      ${item.deadline ? `<p style="color:#888;font-size:0.85rem;">⏰ Deadline: ${formatTanggal(item.deadline)}</p>` : ''}
+      <p>${escHtml((item.deskripsi || '').substring(0, 100))}${(item.deskripsi || '').length > 100 ? '...' : ''}</p>
+    </div>
+  `).join('');
 }
 
-function getSortOrder(){
-    return document
-        .getElementById("sortSelect")
-        .value;
+async function loadEvents() {
+  const container = document.getElementById('eventContainer');
+  container.innerHTML = '<p>Memuat data...</p>';
+
+  const sortVal = document.getElementById('sortSelect')?.value || 'asc';
+  const ascending = sortVal !== 'desc';
+
+  const { data, error } = await db
+    .from('events')
+    .select('*')
+    .order('tanggal', { ascending });
+
+  if (error) {
+    container.innerHTML = '<p>Gagal memuat data event.</p>';
+    console.error(error);
+    return;
+  }
+
+  const keyword = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  const filtered = (data || []).filter(item =>
+    item.nama?.toLowerCase().includes(keyword) ||
+    item.deskripsi?.toLowerCase().includes(keyword)
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<p>Belum ada data event.</p>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => `
+    <div class="card" onclick="openModal('${escHtml(item.nama)}', '${escHtml(item.deskripsi || '')}', '${item.tanggal || ''}', '${item.image_url || ''}')">
+      ${item.image_url ? `<img src="${item.image_url}" alt="${escHtml(item.nama)}" style="width:100%;border-radius:8px;margin-bottom:10px;object-fit:cover;max-height:160px;">` : ''}
+      <h3>${escHtml(item.nama)}</h3>
+      ${item.tanggal ? `<p style="color:#888;font-size:0.85rem;">📅 Tanggal: ${formatTanggal(item.tanggal)}</p>` : ''}
+      <p>${escHtml((item.deskripsi || '').substring(0, 100))}${(item.deskripsi || '').length > 100 ? '...' : ''}</p>
+    </div>
+  `).join('');
 }
 
-function parseDateValue(value){
-    const date = new Date(value);
-    return isNaN(date) ? null : date;
+// ─── SEARCH & SORT ───────────────────────────────────────────
+
+function handleSearch() {
+  loadBeasiswa();
+  loadEvents();
 }
 
-function formatDateForDisplay(value){
-    const date = parseDateValue(value);
-    return date ? date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric"
-    }) : value;
+function handleSort() {
+  loadBeasiswa();
+  loadEvents();
 }
 
-function itemMatchesSearch(text){
-    const keyword = getSearchKeyword();
-    return keyword === "" || text.toLowerCase().includes(keyword);
+// ─── MODAL ───────────────────────────────────────────────────
+
+function openModal(title, body, tanggal, imageUrl) {
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody  = document.getElementById('modal-body');
+  const modal      = document.getElementById('modal');
+
+  modalTitle.textContent = title;
+
+  let content = '';
+  if (imageUrl) {
+    content += `<img src="${imageUrl}" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;max-height:200px;">`;
+  }
+  if (tanggal) {
+    content += `<p style="color:#888;margin-bottom:8px;">📅 ${formatTanggal(tanggal)}</p>`;
+  }
+  content += `<p>${body || 'Tidak ada deskripsi.'}</p>`;
+  modalBody.innerHTML = content;
+
+  modal.style.display = 'flex';
 }
 
-function sortByDate(list, dateKey){
-    const order = getSortOrder();
-    if(order === "none"){
-        return list;
-    }
-
-    return [...list].sort((a,b)=>{
-        const dateA = parseDateValue(a[dateKey]);
-        const dateB = parseDateValue(b[dateKey]);
-
-        if(!dateA && !dateB) return 0;
-        if(!dateA) return 1;
-        if(!dateB) return -1;
-
-        return order === "asc"
-            ? dateA - dateB
-            : dateB - dateA;
-    });
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
 }
 
-function renderBeasiswa(){
+// Tutup modal kalau klik di luar kotak
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('modal');
+  if (e.target === modal) closeModal();
+});
 
-    const container =
-    document.getElementById(
-        "beasiswaContainer"
-    );
+// ─── SOSIAL MEDIA ────────────────────────────────────────────
 
-    const keyword = getSearchKeyword();
-    const filtered = beasiswaList.filter(b=>{
-        const text = `${b.nama} ${b.deadline}`;
-        return itemMatchesSearch(text);
-    });
-
-    const sorted = sortByDate(filtered, "deadline");
-
-    container.innerHTML = "";
-
-    if(sorted.length === 0){
-        container.innerHTML = `
-            <div class="card">
-                <p>Tidak ada beasiswa yang sesuai.</p>
-            </div>
-        `;
-        return;
-    }
-
-    sorted.forEach((b,index)=>{
-
-        container.innerHTML += `
-
-        <div class="card">
-
-            <img src="${b.image || 'https://via.placeholder.com/300'}" alt="">
-
-            <h3>${b.nama}</h3>
-
-            <p>
-            Deadline:
-            ${formatDateForDisplay(b.deadline)}
-            </p>
-
-            <button class="btn"
-            onclick="openModal('beasiswa',${index})">
-            Open
-            </button>
-
-        </div>
-        `;
-    });
+function openLink(url) {
+  window.open(url, '_blank');
 }
 
-function renderEvent(){
+// ─── HELPERS ─────────────────────────────────────────────────
 
-    const container =
-    document.getElementById(
-        "eventContainer"
-    );
-
-    const filtered = eventList.filter(e=>{
-        const text = `${e.nama} ${e.tanggal}`;
-        return itemMatchesSearch(text);
-    });
-
-    const sorted = sortByDate(filtered, "tanggal");
-
-    container.innerHTML = "";
-
-    if(sorted.length === 0){
-        container.innerHTML = `
-            <div class="card">
-                <p>Tidak ada event yang sesuai.</p>
-            </div>
-        `;
-        return;
-    }
-
-    sorted.forEach((e,index)=>{
-
-        container.innerHTML += `
-
-        <div class="card">
-
-            <img src="${e.image || 'https://via.placeholder.com/300'}" alt="">
-
-            <h3>${e.nama}</h3>
-
-            <p>
-            Tanggal:
-            ${formatDateForDisplay(e.tanggal)}
-            </p>
-
-            <button class="btn"
-            onclick="openModal('event',${index})">
-            Open
-            </button>
-
-        </div>
-        `;
-    });
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function formatText(text){
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\r\n|\r|\n/g, "<br>");
+function formatTanggal(str) {
+  if (!str) return '-';
+  const d = new Date(str);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function openModal(type,index){
+// ─── INISIALISASI ─────────────────────────────────────────────
 
-    const title =
-    document.getElementById(
-        "modal-title"
-    );
+// Pasang event listener search & sort
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchInput');
+  const sortSelect  = document.getElementById('sortSelect');
 
-    const body =
-    document.getElementById(
-        "modal-body"
-    );
+  if (searchInput) searchInput.addEventListener('input', handleSearch);
+  if (sortSelect)  sortSelect.addEventListener('change', handleSort);
 
-    if(type === "beasiswa"){
-
-        let b = beasiswaList[index];
-
-        title.innerText =
-        b.nama;
-
-        body.innerHTML = `
-        <img src="${b.image || 'https://via.placeholder.com/300'}" alt="" style="width:100%; border-radius:6px; margin-bottom:15px;">
-        <b>Deadline:</b><br>
-        ${formatDateForDisplay(b.deadline)}<br><br>
-        ${formatText(b.desc)}
-        `;
-    }
-
-    if(type === "event"){
-
-        let e = eventList[index];
-
-        title.innerText =
-        e.nama;
-
-        body.innerHTML = `
-        <img src="${e.image || 'https://via.placeholder.com/300'}" alt="" style="width:100%; border-radius:6px; margin-bottom:15px;">
-        <b>Tanggal:</b><br>
-        ${formatDateForDisplay(e.tanggal)}<br><br>
-        ${formatText(e.desc)}
-        `;
-    }
-
-    document.getElementById(
-        "modal"
-    ).style.display = "flex";
-}
-
-function closeModal(){
-
-    document.getElementById(
-        "modal"
-    ).style.display = "none";
-}
-
-function openLink(url){
-
-    window.open(url,"_blank");
-}
-
-function renderAll(){
-    renderBeasiswa();
-    renderEvent();
-}
-
-const searchInput = document.getElementById("searchInput");
-const sortSelect = document.getElementById("sortSelect");
-
-searchInput?.addEventListener("input", renderAll);
-sortSelect?.addEventListener("change", renderAll);
-
-renderAll();
+  loadBeasiswa();
+  loadEvents();
+});
