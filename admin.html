@@ -2,145 +2,90 @@
 <html lang="id">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-
     <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
-    
 
-    
-    <!-- LOGIN -->
-    <div class="login-page"
-        id="loginPage">
-
-        <a href="index.html" class="back-link"> Back</a>
-
+    <!-- LOGIN PAGE -->
+    <div class="login-page" id="loginPage">
+        <a href="index.html" class="back-link">← Back</a>
         <div class="login-box">
-
             <h1>Admin Login</h1>
-
+            <input type="email"
+                id="loginEmail"
+                placeholder="Email Admin">
             <input type="password"
                 id="password"
                 placeholder="Password"
-                onkeydown="if(event.key === 'Enter') { login() }"
-                >
-
-            <button class="btn"
-                onclick="login()">
-                Login
-            </button>
-
+                onkeydown="if(event.key==='Enter') login()">
+            <button class="btn" onclick="login()">Login</button>
         </div>
-
     </div>
 
     <!-- ADMIN PANEL -->
-    <div id="adminPanel"
-        style="display:none;">
+    <div id="adminPanel" style="display:none;">
 
-        <a href="index.html" class="back-link"> Back</a>
+        <nav>
+            <div class="nav-container">
+                <h2 class="logo">Admin Dashboard</h2>
+                <ul class="nav-menu">
+                    <li><span id="adminEmail" style="color:white;font-size:14px;"></span></li>
+                    <li><a href="index.html">← Kembali ke Site</a></li>
+                    <li><button class="btn" onclick="logout()" style="background:white;color:#0b3d91;">Logout</button></li>
+                </ul>
+            </div>
+        </nav>
 
         <section>
-
             <h1>Dashboard Admin</h1>
             <br><br>
+
             <!-- BEASISWA -->
             <h2>Tambah Beasiswa</h2>
-
             <div class="form-container">
                 <div class="form-row">
-                    <input type="text"
-                        id="bNama"
-                        placeholder="Nama">
-
-                    <input type="date"
-                        id="bDeadline"
-                        placeholder="Deadline"
-                        required>
-
-                    <input type="file"
-                        id="bImage"
-                        accept="image/*">
-
-                    <button class="btn"
-                        onclick="addBeasiswa()">
-                        Add
-                    </button>
+                    <input type="text"   id="bNama"     placeholder="Nama">
+                    <input type="date"   id="bDeadline" placeholder="Deadline">
+                    <input type="file"   id="bImage"    accept="image/*">
+                    <button class="btn" id="bAddBtn" onclick="addBeasiswa()">Add</button>
                 </div>
-
-                <textarea id="bDesc"
-                    placeholder="Deskripsi"></textarea>
+                <textarea id="bDesc" placeholder="Deskripsi"></textarea>
             </div>
-
-            <div class="container"
-                id="adminBeasiswa">
-            </div>
+            <div class="container" id="adminBeasiswa"></div>
 
             <!-- EVENT -->
             <h2>Tambah Event</h2>
-
             <div class="form-container">
                 <div class="form-row">
-                    <input type="text"
-                        id="eNama"
-                        placeholder="Nama Event">
-
-                    <input type="date"
-                        id="eTanggal"
-                        placeholder="Tanggal"
-                        required>
-
-                    <input type="file"
-                        id="eImage"
-                        accept="image/*">
-
-                    <button class="btn"
-                        onclick="addEvent()">
-                        Add
-                    </button>
+                    <input type="text"   id="eNama"    placeholder="Nama Event">
+                    <input type="date"   id="eTanggal" placeholder="Tanggal">
+                    <input type="file"   id="eImage"   accept="image/*">
+                    <button class="btn" id="eAddBtn" onclick="addEvent()">Add</button>
                 </div>
-
-                <textarea id="eDesc"
-                    placeholder="Deskripsi"></textarea>
+                <textarea id="eDesc" placeholder="Deskripsi"></textarea>
             </div>
-
-            <div class="container"
-                id="adminEvent">
-            </div>
+            <div class="container" id="adminEvent"></div>
 
         </section>
-
     </div>
 
     <!-- MODAL -->
-    <div class="modal"
-        id="modal">
-
+    <div class="modal" id="modal">
         <div class="modal-content">
             <h3 id="modal-title"></h3>
             <br>
             <p id="modal-body"></p>
             <br>
-            <button class="btn"
-                onclick="closeModal()">
-                Close
-            </button>
-
+            <button class="btn" onclick="closeModal()">Close</button>
         </div>
-
     </div>
 
-    <script src="admin.js"></script>
+    <!-- ⚠️ type="module" is required for Firebase imports -->
+    <script type="module" src="admin.js"></script>
 
 </body>
-
 </html>
